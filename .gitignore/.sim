@@ -1,0 +1,126 @@
+// Project #2: 16-bit pipeline processor
+// Test pattern
+`timescale 1ns / 10ps
+`define idle    1'b0
+`define exec    1'b1
+
+`define gr0     3'b000
+`define gr1     3'b001
+`define gr2     3'b010
+`define gr3     3'b011
+`define gr4     3'b100
+`define gr5     3'b101
+`define gr6     3'b110
+`define gr7     3'b111
+
+//************* 指令宏定义 *************//
+`define NOP		5'b0_0000
+`define HALT	5'b0_0001
+`define LOAD	5'b0_0010
+`define STORE	5'b0_0011
+`define SLL		5'b0_0100
+`define SLA		5'b0_0110
+`define SRL		5'b0_0101
+`define SRA		5'b0_0111
+`define ADD		5'b0_1000
+`define ADDI	5'b0_1001
+`define SUB		5'b0_1010
+`define SUBI	5'b0_1011
+`define CMP		5'b0_1100
+`define AND		5'b0_1101
+`define OR		5'b0_1110
+`define XOR		5'b0_1111
+`define LDIH	5'b1_0000
+`define ADDC	5'b1_0001
+`define SUBC	5'b1_0010
+`define JUMP	5'b1_1000
+`define JMPR	5'b1_1001
+`define BZ		5'b1_1010
+`define BNZ		5'b1_1011
+`define BN		5'b1_1100
+`define BNN		5'b1_1101
+`define BC		5'b1_1110
+`define BNC		5'b1_1111
+
+module t_processor;
+
+  reg reset, clock, enable, start;
+  reg [3:0] select_y;
+  wire [15:0] y;
+
+  initial begin
+  $readmemh("F:/vivado project/gcm/imem.ini", processor.imem.ram);
+  end
+
+  initial begin
+  $readmemh("F:/vivado project/gcm/dmem.ini", processor.dmem.ram);
+  end
+
+  integer x;
+  integer dmem;
+  initial dmem= $fopen("F:/vivado project/gcm/dmem.mem");
+  task dmem_dump;
+	begin
+	x = 0;
+        $fdisplay (dmem,"");
+	repeat (256)
+		begin
+		$fdisplay (dmem,"Add:%x, Cell:%x", x, processor.dmem.ram[x]);
+		x=x+1;
+		end
+	end
+  endtask
+
+
+  // Clock
+  initial clock = 0;
+  always
+    #5 clock = ~clock;
+
+  initial
+    begin
+      $monitor("%h, %h, %h", y, processor.i_datain, processor.i_addr);
+      enable <= 0; start <=0; reset <=0; select_y <= 3;
+      #10 reset <= 0;
+      #10 reset <= 1;
+      #10 enable <= 1;
+      #10 start <= 1; 
+      #10 start <= 0; 
+      #20000
+      dmem_dump;
+      $finish;
+    end
+
+   processor processor (clock, reset, start, enable, select_y, y);
+	/*reg reset, clk, enable, start;
+	wire [15:0] y;
+	processor processor (
+		.clk(clk), 
+		.enable(enable), 
+		.reset(reset), 
+		.start(start), 
+		.y(y)
+	);
+	
+	initial
+	begin
+		$display("reg_A:  reg_B:  reg_C:  gr1:  gr2:  gr3:  ");
+		$monitor("%h: %h: %h: %h: %h: %h: ", pcpu.reg_A, pcpu.reg_B, pcpu.reg_C,
+		pcpu.gr[1], pcpu.gr[2], pcpu.gr[3]);
+	end
+	
+	initial
+    begin
+      $monitor("%h, %h, %h", y, processor.i_datain, processor.i_addr);
+      enable <= 0; start <=0; reset <=0;
+      #10 reset <= 0;
+      #10 reset <= 1;
+      #10 enable <= 1;
+      #10 start <= 1; 
+      #10 start <= 0; 
+      #20000
+      $finish;
+    end*/
+   
+   
+endmodule
